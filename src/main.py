@@ -1,33 +1,23 @@
 #!/usr/bin/python
 # coding=utf8
 __author__ = 'gaosongbo'
-# def init():
-#     import ConfigParser
-#     conf=ConfigParser.ConfigParser()
-#     conf.read('../conf/ana.properties')
-#     print conf.sections()
+import tushare
+import pandas
+import numpy
+import datetime
+from globalFactory import configFectory
+from spider import todayDataSpider
 
-def saomiaoteshuguadan():
-    sidfp='d:/codespace/AnalysisPython/conf/sids.csv'
-    import tushare
-    import pandas
-    df = tushare.get_realtime_quotes('300312')
-    i=0
-    for l in open(sidfp).readlines():
-        try:
-            if len(l.strip())>0:
-                sid = l.strip()
-                sidd=tushare.get_realtime_quotes(sid)
-                df=pandas.concat([df,sidd])
-            if i>=100:
-                print l.strip()
-                i=0
-            i+=1
-        except Exception,e:
-            print e,l.strip()
-    #del df['name']
-    df.to_csv('d:/data/20160601_realtime_quotes.csv',encoding='gbk')
-    print "get ok~"
-    
-if __name__=="__main__":
-    saomiaoteshuguadan()
+
+
+def saomiao():
+    d = pandas.read_csv('D:/pySpace/data/2016-06-02_realtime_quotes.csv', index_col='code')
+    print d[d['a1_v'] == numpy.nan].query('b2_v==b3_v').query('b2_v==b4_v').query('b2_v==b5_v')
+    print datetime.datetime.now().strftime('%Y-%m-%d')
+
+
+if __name__ == "__main__":
+    # saomiao()
+    # print configFectory.config()
+    # todayDataSpider.saomiaoteshuguadan()
+    saomiao()
