@@ -11,7 +11,7 @@ from spider import todayDataSpider
 
 
 def saomiao():
-    d = pandas.read_csv('D:/pySpace/data/2016-06-02_realtime_quotes.csv', index_col='code')
+    d = pandas.read_csv('D:/pySpace/data/2016-06-03_realtime_quotes.csv', index_col='code')
     print d[d['a1_v'] == numpy.nan].query('b2_v==b3_v').query('b2_v==b4_v').query('b2_v==b5_v')
     print datetime.datetime.now().strftime('%Y-%m-%d')
 
