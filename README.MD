@@ -19,9 +19,16 @@ $ProjectRoot/data/hgtHistory.csv
 
 
 |数据类型|数据源|粒度|存放路径|
+|:-------|------|----|--------|
 |大盘指数|tushare|日线、15分钟线|tushare|
+|:-------|------|----|--------|
 |沪股通|http://datainterface.eastmoney.com/EM_DataCenter/JS.aspx?type=DPAB&sty=AHTZJL&js=({data:[(x)],time:%22(ut)%22})&cb=callback02446733516803452&callback=callback02446733516803452&_=1464757205199|日线、15分钟|$ProjectRoot/data/hgtHistory.csv|
+|:-------|------|----|--------|
 |关注股|tushare|日线|略|
+|:-------|------|----|--------|
+|||||
+|:-------|------|----|--------|
+
 
 
 ##Trainer
