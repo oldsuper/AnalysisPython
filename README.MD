@@ -5,17 +5,6 @@
 ##API
 ##Data获取
 
-###SH
-大盘指数，主要是三大板块
-###HGT
-通过东方财富的接口获取HGT买卖数据
-####地址
-http://datainterface.eastmoney.com/EM_DataCenter/JS.aspx?type=DPAB&sty=AHTZJL&js=({data:[(x)],time:%22(ut)%22})&cb=callback02446733516803452&callback=callback02446733516803452&_=1464757205199
-####数据存放
-$ProjectRoot/data/hgtHistory.csv
-####记录粒度
-日，15分钟
-
 
 
 |数据类型|数据源|粒度|存放路径|

@@ -9,11 +9,16 @@ import pandas
 import numpy
 import datetime
 
+PROJECTPATH = 'd:/\pySpace/AnalysisPython/'
+
+
+def getToday():
+    return datetime.datetime.now().strftime('%Y-%m-%d')
+
 
 def saomiaoanhao(dataFilepath):
     d = pandas.read_csv(dataFilepath, index_col='code')
     print d[d['a1_v'] == numpy.nan].query('b2_v==b3_v').query('b2_v==b4_v').query('b2_v==b5_v')
-    print datetime.datetime.now().strftime('%Y-%m-%d')
 
 
 def anhaomoxing(sidfp='d:/\pySpace/AnalysisPython/conf/sids.csv'):
@@ -37,7 +42,22 @@ def anhaomoxing(sidfp='d:/\pySpace/AnalysisPython/conf/sids.csv'):
     print "get ok~"
     saomiaoanhao()
 
-def hugutong(hgturl='http://datainterface.eastmoney.com/EM_DataCenter/JS.aspx?type=DPAB&sty=AHTZJL&js=({data:[(x)],time:%22(ut)%22})&cb=callback02446733516803452&callback=callback02446733516803452&_=1464757205199'):
+
+def hugutong(
+        hgturl='http://datainterface.eastmoney.com/EM_DataCenter/JS.aspx?type=DPAB&sty=AHTZJL&js=({data:[(x)],time:%22(ut)%22})&cb=callback02446733516803452&callback=callback02446733516803452&_=1464757205199',
+        dateBackupFile='d:/\pySpace/AnalysisPython/data/hgttmp.txt',
+        dailyFile='d:/\pySpace/AnalysisPython/data/hgtDailyDetail.csv'):
     import urllib
+    import re
+
+    r = re.compile('{.*}')
     content = urllib.urlopen(hgturl).read()
-    print content
+    today = getToday()
+    hgtcont = re.search(r, content).group()
+    open(dateBackupFile, 'at+').write(hgtcont + '\n')
+    rd = re.compile('[.*]')
+    hgtcont = re.search(rd, hgtcont).group()
+    tl = hgtcont.split('","')
+    # 这里还没整完
+    open(dailyFile, 'at+').write(hgtcont + '\n')
+
