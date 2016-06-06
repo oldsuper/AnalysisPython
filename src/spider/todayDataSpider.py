@@ -19,6 +19,7 @@ def getToday():
 def saomiaoanhao(dataFilepath=None):
     if dataFilepath == None:
         dataFilepath = 'd:/pySpace/data/' + datetime.datetime.now().strftime('%Y-%m-%d') + '_realtime_quotes.csv'
+    print dataFilepath
     d = pandas.read_csv(dataFilepath, index_col='code')
     print d[d['a1_v'] == numpy.nan].query('b2_v==b3_v').query('b2_v==b4_v').query('b2_v==b5_v')
 
