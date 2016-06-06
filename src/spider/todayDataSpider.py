@@ -16,7 +16,9 @@ def getToday():
     return datetime.datetime.now().strftime('%Y-%m-%d')
 
 
-def saomiaoanhao(dataFilepath):
+def saomiaoanhao(dataFilepath=None):
+    if dataFilepath == None:
+        dataFilepath = 'd:/pySpace/data/' + datetime.datetime.now().strftime('%Y-%m-%d') + '_realtime_quotes.csv'
     d = pandas.read_csv(dataFilepath, index_col='code')
     print d[d['a1_v'] == numpy.nan].query('b2_v==b3_v').query('b2_v==b4_v').query('b2_v==b5_v')
 
@@ -52,12 +54,19 @@ def hugutong(
 
     r = re.compile('{.*}')
     content = urllib.urlopen(hgturl).read()
-    today = getToday()
     hgtcont = re.search(r, content).group()
     open(dateBackupFile, 'at+').write(hgtcont + '\n')
-    rd = re.compile('[.*]')
-    hgtcont = re.search(rd, hgtcont).group()
+    timestr = getToday() + "T" + hgtcont[hgtcont.rfind(':"') + 2:-2]
+    rd = re.compile('\[.*\]')
+    hgtcont = re.search(rd, hgtcont).group()[2:-2]
     tl = hgtcont.split('","')
     # 这里还没整完
-    open(dailyFile, 'at+').write(hgtcont + '\n')
+    open(dailyFile, 'at+').writelines(timestr + ',' + tl[0] + '\n')
+    open(dailyFile, 'at+').write(timestr + ',' + tl[1] + '\n')
 
+
+from base.httpclient import *
+
+
+def getFaveriteS(sid, market=None):
+    return sinaAPI(sid, market)
