@@ -12,20 +12,23 @@ CLS = ['gupiaoming', 'jinrikaipanjia', 'zuorishoupanjia', 'dangqianjia', 'jinriz
 YEAR = time.strftime('%Y', time.localtime(time.time()))
 
 
-def sinAPIGetConetent(url):
+def sinAPIGetConetent(url,type):
     try:
         content = urllib.urlopen(url).read()
         content = content.split('=')[1]
         content = content[1:-2]
         time = re.search(re.compile(YEAR+'-.*'), content).group()[:-3].replace(',', ' ')
-        print content[:content.find(','+YEAR+'-')].split(',')
-        print len(CLS)
-        return pandas.DataFrame(content[:content.find(','+YEAR+'-')].split(','), index=CLS, columns=[time]).T
+        # print content[:content.find(','+YEAR+'-')].split(',')
+        print time
+        if type=='p':
+            return pandas.DataFrame(content[:content.find(','+YEAR+'-')].split(','), index=CLS, columns=[time]).T
+        else:
+            return time+','+content[:content.find(','+YEAR+'-')]
     except:
         return None
 
 
-def sinaAPI(sid, m=None):
+def sinaAPI(sid, m=None,type='p'):
     baseURL = 'http://hq.sinajs.cn/list={sid}'
     if m != None:
         url = baseURL.replace('{sid}', m + sid)
@@ -34,7 +37,7 @@ def sinaAPI(sid, m=None):
             url = baseURL.replace('{sid}', 'sz' + sid)
         if sid.startswith('6'):
             url = baseURL.replace('{sid}', 'sh' + sid)
-    return sinAPIGetConetent(url)
+    return sinAPIGetConetent(url,type)
 
 # 399001
 # 000001 sh sz

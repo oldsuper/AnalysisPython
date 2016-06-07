@@ -15,11 +15,11 @@ def test():
 if __name__ == "__main__":
     # saomiao()
     # print configFectory.config()
-    todayDataSpider.saomiaoanhao()
+    # todayDataSpider.saomiaoanhao()
     # todayDataSpider.hugutong()
     # import pandas
     # p=pandas.read_csv('D:\\pySpace\\AnalysisPython\\data/hgtDailyDetail.csv',index_col='timestr')
     # sched = BlockingScheduler()
     # sched.add_job(test, trigger='cron', second=5)
     # sched.start()
-    # print todayDataSpider.getFaveriteS('300001')
+    print todayDataSpider.collectDapanzhishu()

@@ -67,7 +67,17 @@ def hugutong(
 
 
 from base.httpclient import *
+import time
 
 
-def getFaveriteS(sid, market=None):
-    return sinaAPI(sid, market)
+def getSingleS(sid, market=None,type='p'):
+    return sinaAPI(sid, market,type)
+def collectDapanzhishu():
+    dapandailyfile = 'd:/pySpace/AnalysisPython/data/dapanrishuju.csv'
+    i=0
+    dpsid=[('000001','sh'),('399001','sz'),('399006','sz')]
+    while (i<47):
+        for sid,m in dpsid:
+            open(dapandailyfile, 'at+').write(sinaAPI(sid, m,'s')  + '\n')
+        time.sleep(5*60)
+        i+=1
