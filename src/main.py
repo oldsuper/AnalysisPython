@@ -27,6 +27,13 @@ def shouhu():
             cthread.run()
         cid+=1
         time.sleep(1)
+class SHThread(threading.Thread):
+    def __init__(self,thread_id,name):
+        super(SHThread, self).__init__()  #调用父类的构造函数
+        self.thread_id = thread_id
+        self.name = name
+    def run(self):
+        print self.name,'starting...'
 if __name__ == "__main__":
     # saomiao()
     # print configFectory.config()
