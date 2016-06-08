@@ -8,10 +8,25 @@ import datetime
 from globalFactory import configFectory
 from spider import todayDataSpider
 import time
-def test():
-    print time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
-
-# from apscheduler.schedulers import BlockingScheduler
+import threading
+TIMEFORMAT='%Y%m%d%H%M%S'
+import random
+def test(name):
+    st = random.Random.randint(1,20)
+    print name,'sleep',st
+    time.sleep()
+    print time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())),name
+def shouhu():
+    c_threads = []
+    cid = 1
+    while(True):
+        print "shouhu"
+        if time.localtime().tm_sec % 10 == 0:
+            cthread = threading.Thread(test,args=(str(cid)))
+            print str(cid),'begin'
+            cthread.run()
+        cid+=1
+        time.sleep(1)
 if __name__ == "__main__":
     # saomiao()
     # print configFectory.config()
@@ -22,4 +37,7 @@ if __name__ == "__main__":
     # sched = BlockingScheduler()
     # sched.add_job(test, trigger='cron', second=5)
     # sched.start()
-    print todayDataSpider.collectDapanzhishu()
+    # print todayDataSpider.collectDapanzhishu()
+
+    shouhu = threading.Thread(target=shouhu)
+    shouhu.run()
