@@ -40,23 +40,26 @@ apscheduler不会用
 目前计划用多线程写一个能用的。定时间点开始吊起抓取进程，任务、周期、抓取范围走配置或数据库  
 ####数据存储
 目前计划用csv做硬存储，内部运算和临时存储用pandas  
-####计算
-MACD  
-KDJ  
-####数据获取
+###数据源
 历史数据和实时数据  
-#####tushare
+####tushare
 
-#####东方财富
+####东方财富
 沪股通实时数据  
 http://datainterface.eastmoney.com/EM_DataCenter/JS.aspx?type=DPAB&sty=AHTZJL&js=({data:[(x)],time:%22(ut)%22})&cb=callback02446733516803452&callback=callback02446733516803452&_=1464757205199
-#####sina接口
+####sina接口
 个股实时  
 http://hq.sinajs.cn/list={sid}{market}  
 ##Trainer
+先不做
+##计算
+MACD  
+KDJ  
 ##其他
 ###暗号模型
 涨停收盘，买1、2、3、4、5的购买量比较奇怪（如11万，111，111，111，111这种）的
 ###“股神”推荐
 这个是否要做呢？
+#参考
+多线程http://www.jianshu.com/p/86b8e78c418a  
 
