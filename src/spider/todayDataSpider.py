@@ -70,14 +70,13 @@ from base.httpclient import *
 import time
 
 
-def getSingleS(sid, market=None,type='p'):
-    return sinaAPI(sid, market,type)
+def getSingleS(sid, market=None, type='p'):
+    return sinaAPI(sid, market, type)
+
+
 def collectDapanzhishu():
     dapandailyfile = 'd:/pySpace/AnalysisPython/data/dapanrishuju.csv'
-    i=0
-    dpsid=[('000001','sh'),('399001','sz'),('399006','sz')]
-    while (i<47):
-        for sid,m in dpsid:
-            open(dapandailyfile, 'at+').write(sinaAPI(sid, m,'s')  + '\n')
-        time.sleep(5*60)
-        i+=1
+    i = 0
+    dpsid = [('000001', 'sh'), ('399001', 'sz'), ('399006', 'sz')]
+    for sid, m in dpsid:
+        open(dapandailyfile, 'at+').write(sinaAPI(sid, m, 's') + '\n')
