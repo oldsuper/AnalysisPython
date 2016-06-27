@@ -89,25 +89,25 @@ class JobThread(threading.Thread):
         # from spider.todayDataSpider import hugutong
         now = datetime.datetime.now()
         self.updateNextRunTime()
-        # while (now < self.end):
-        # # exec (self.method[index + 1:] + '()')
-        # time.sleep(1)
-        # now = datetime.datetime.now()
-        #
-        while self.end >= now:
-            # print "now", now, "nextruntime", self.nextruntime, "end", self.end, self.begin
-            # print math.pow((now - self.nextruntime).total_seconds(), 2)
-            if (math.pow((now - self.nextruntime).total_seconds(), 2) <= 1 ):
-                # and (self.nextruntime <= self.end)
-                # run ....
-                print 'run ', self.method, 'at ', now
+
+        while (self.nextruntime is not None):
+            if self.nextruntime <= now:
+                if math.pow((now - self.nextruntime).total_seconds(), 2) <= 1:
+                    # print self.method, 'run ', ' at ', now
+                    self.target()
                 self.updateNextRunTime()
-            time.sleep(1)
-            now = datetime.datetime.now()
+            else:
+                sleeptime = (self.nextruntime - now).total_seconds()
+                time.sleep(sleeptime)
+                now = datetime.datetime.now()
 
     def updateNextRunTime(self):
         if self.nextruntime != None:
-            self.nextruntime = self.runtimes[self.runtimes.index(self.nextruntime) + 1]
+            index = self.runtimes.index(self.nextruntime)
+            if len(self.runtimes) >= index + 2:
+                self.nextruntime = self.runtimes[index + 1]
+            else:
+                self.nextruntime = None
         else:
             now = datetime.datetime.now()
             for nrt in self.runtimes:
@@ -166,9 +166,18 @@ if __name__ == "__main__":
         if section.find('job') >= 0:
             jobThread = JobThread(conf.get(section, 'method'), conf.getint(section, 'interval'),
                                   conf.get(section, 'begin'), conf.get(section, 'end'))
-            print jobThread.runtimes
+            # print jobThread.runtimes
             for i in jobThread.runtimes:
-                print i.strftime(TIMEFORMAT)
-            print jobThread.method
-            jobThread.start()
-            jobThread.join()
+                print jobThread.method, i.strftime(TIMEFORMAT)
+            threads.append(jobThread)
+    print len(threads)
+    for jobThread in threads:
+        jobThread.start()
+        jobThread.join()
+
+        # for jobThread in threads:
+        # jobThread.join()
+        # while (True):
+        # print 'current_thread',threading.current_thread()
+        # time.sleep(5)
+        # jobThread.join()
