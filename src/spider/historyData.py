@@ -6,6 +6,7 @@ import pandas
 import os
 from datetime import datetime
 
+
 def getNewStock(stockbase=''):
     # 60天内的算新股
     newStockIDs = []
@@ -16,9 +17,13 @@ def getNewStock(stockbase=''):
         today = datetime.today()
         for i in range(sbcount)[::-1]:
             try:
-                if (today - datetime.strptime(str(sb.iloc[i-sbcount]['timeToMarket']),'%Y%m%d')).days <= 60:
+                if (today - datetime.strptime(str(sb.iloc[i - sbcount]['timeToMarket']), '%Y%m%d')).days <= 60:
                     # print ,sb.iloc[i-sbcount]['timeToMarket']
-                    newStockIDs.append('%06.d' % sb.iloc[i-sbcount]['code'])
+                    newStockIDs.append('%06.d' % sb.iloc[i - sbcount]['code'])
             except:
                 pass
     return newStockIDs
+
+
+def getHistoryData(datapath, sid, begin, end=None):
+    pass
