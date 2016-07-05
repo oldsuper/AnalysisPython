@@ -80,3 +80,9 @@ def collectDapanzhishu():
     dpsid = [('000001', 'sh'), ('399001', 'sz'), ('399006', 'sz')]
     for sid, m in dpsid:
         open(dapandailyfile, 'at+').write(sinaAPI(sid, m, 's') + '\n')
+
+
+def getStockBase(stockbase='../conf/stockbase.csv'):
+    sb = tushare.get_stock_basics()
+    if sb.index.size > 0:
+        sb.to_csv(stockbase)

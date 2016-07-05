@@ -7,6 +7,7 @@ import numpy
 import datetime
 from globalFactory import configFectory
 from spider import todayDataSpider
+from spider.historyData import getNewStock
 import time
 import threading
 import math
@@ -40,13 +41,6 @@ def shouhu():
 
 
 
-def main():
-    conf = configFectory.config()
-    for section in conf.sections():
-        if section.find('job') >= 0:
-            # 定时任务
-            print section
-            print conf.items(section)
 
 
 def testMethod(**args):
@@ -67,6 +61,10 @@ def useThread():
     for jobThread in threads:
         jobThread.start()
         jobThread.join()
+def main():
+    conf = configFectory.config()
+    nsb = getNewStock(conf.get('dataConfig','stockbase'))
+    print nsb
 if __name__ == "__main__":
     # saomiao()
     # print configFectory.config()
@@ -91,6 +89,10 @@ if __name__ == "__main__":
     # print td
     # print td.total_seconds()
 
-    # 使用thread运行任务
+    # 使用thread运行任务 demo
+    # useThread()
 
-    useThread()
+
+    # 获取当前stockbase数据
+    # todayDataSpider.getStockBase()
+    main()
