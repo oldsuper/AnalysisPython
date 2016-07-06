@@ -24,6 +24,9 @@ def getNewStock(stockbase=''):
                 pass
     return newStockIDs
 
+'''
+
+'''
 
 def getHistoryData(datapath, sid, begin, end=None):
     pass
