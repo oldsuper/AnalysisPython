@@ -8,8 +8,11 @@ import tushare
 import pandas
 import numpy
 import datetime
+from datetime import timedelta
+import os
 
 PROJECTPATH = 'd:/\pySpace/AnalysisPython/'
+DAYFORMAT = '%Y-%m-%d'
 
 
 def getToday():
@@ -86,3 +89,36 @@ def getStockBase(stockbase='../conf/stockbase.csv'):
     sb = tushare.get_stock_basics()
     if sb.index.size > 0:
         sb.to_csv(stockbase)
+
+
+def getHistData(datapath):
+    '''
+    每天跑一次，捞取【sh,sz,cyb】的【5,15,30,60】
+    datapath：数据存储位置
+    存储在datapath，一个指数一个ktype一个文件
+    :return:
+    '''
+
+    ktypes = ['5', '15', '30', '60']
+    sids = ['sz', 'sh', 'cyb']
+
+    for sid in sids:
+        for ktype in ktypes:
+            filename = os.path.join(datapath, sid + '_' + ktype + '.csv')
+            if os.path.isfile(filename):
+                # 有这个文件
+                histtmp = pandas.read_csv(os.path.join(datapath, sid + '_' + ktype + '.csv'), index_col='date')
+                start = datetime.datetime.strftime(
+                    datetime.datetime.strptime(histtmp.index.max().split(' ')[0], DAYFORMAT) + timedelta(days=1),
+                    DAYFORMAT)
+
+                if start == datetime.datetime.strftime(datetime.datetime.now() + timedelta(days=1), DAYFORMAT):
+                    # 今天数据已有
+                    pass
+                else:
+                    tmp = tushare.get_hist_data(sid, ktype=ktype, start=start)
+                    pandas.concat([tmp, histtmp]).to_csv(filename)
+            else:
+                # 没有这个文件
+                tmp = tushare.get_hist_data(sid, ktype=ktype)
+                tmp.to_csv(filename)

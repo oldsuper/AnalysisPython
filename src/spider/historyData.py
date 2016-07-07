@@ -70,7 +70,8 @@ def getHistoryData(datapath, sid, start=None, end=None):
         startday = start
     while ( datetime.strptime(startday, DAYFORMAT) >= datetime.strptime(start, DAYFORMAT)):
         # 分成三年三年这种调用方式，然后汇总
-        totalData.append(tushare.get_hist_data(sid, start=startday, end=endday))
+        temp = tushare.get_h_data(sid, start=startday, end=endday)
+        totalData.append(temp)
         endday = startday
         startday = datetime.strftime(datetime.strptime(endday, DAYFORMAT) - timedelta(days=MAXINTERVAL), DAYFORMAT)
 
@@ -78,3 +79,12 @@ def getHistoryData(datapath, sid, start=None, end=None):
     filenameX = lambda x: '_'.join(x)
     filename = os.path.join(datapath, filenameX([sid, start, end])) + '.csv'
     AllData.to_csv(filename)
+
+def getLast3YearsData(datapath, sid):
+    '''
+
+    :param datapath:
+    :param sid:
+    :return:
+    '''
+    tushare.get_hist_data(sid).to_csv(os.path.join(datapath,sid+'.csv'))

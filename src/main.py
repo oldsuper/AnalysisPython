@@ -6,8 +6,8 @@ import pandas
 import numpy
 import datetime
 from globalFactory import configFectory
-from spider import todayDataSpider
-from spider.historyData import getNewStock
+from spider.todayDataSpider import *
+from spider.historyData import getNewStock, getHistoryData
 import time
 import threading
 import math
@@ -38,13 +38,9 @@ def shouhu():
         time.sleep(1)
 
 
-
-
-
-
-
 def testMethod(**args):
     print args
+
 
 def useThread():
     threads = []
@@ -61,10 +57,15 @@ def useThread():
     for jobThread in threads:
         jobThread.start()
         jobThread.join()
+
+
 def main():
     conf = configFectory.config()
-    nsb = getNewStock(conf.get('dataConfig','stockbase'))
-    print nsb
+    # nsb = getNewStock(conf.get('dataConfig','stockbase'))
+    # print nsb
+    # getHistoryData('d:/', '600570', start='2003-12-16', end='2016-07-07')
+    getHistData('D:/pycode/data/dp/')
+
 if __name__ == "__main__":
     # saomiao()
     # print configFectory.config()
