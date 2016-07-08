@@ -8,6 +8,7 @@ import datetime
 from globalFactory import configFectory
 from spider.todayDataSpider import *
 from spider.historyData import getNewStock, getHistoryData
+from dataManage.DP import *
 import time
 import threading
 import math
@@ -64,7 +65,14 @@ def main():
     # nsb = getNewStock(conf.get('dataConfig','stockbase'))
     # print nsb
     # getHistoryData('d:/', '600570', start='2003-12-16', end='2016-07-07')
-    getHistData('D:/pycode/data/dp/')
+    # getHistData('D:/pycode/data/dp/')
+    dpath = 'D:/pycode/data/nsb/'
+    # rs = newstock(dpath)
+    # print rs
+    # prs = pandas.DataFrame(rs).to_csv('D:/pycode/data/ana/nsb.csv')
+    rs = newstockbuyandsell(dpath)
+    pandas.DataFrame(rs).to_csv('D:/pycode/data/ana/newstockbuyandsell_hpc.csv')
+
 
 if __name__ == "__main__":
     # saomiao()
