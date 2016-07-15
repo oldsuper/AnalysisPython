@@ -6,5 +6,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="TestXuriSelenium" />
     <orderEntry type="module" module-name="tools" />
+    <orderEntry type="module" module-name="union_msg" />
   </component>
 </module>

@@ -7,7 +7,7 @@ import numpy
 import datetime
 from globalFactory import configFectory
 from spider.todayDataSpider import *
-from spider.historyData import getNewStock, getHistoryData
+from spider.historyData import *
 from dataManage.DP import *
 import time
 import threading
@@ -62,16 +62,29 @@ def useThread():
 
 def main():
     conf = configFectory.config()
-    # nsb = getNewStock(conf.get('dataConfig','stockbase'))
     # print nsb
     # getHistoryData('d:/', '600570', start='2003-12-16', end='2016-07-07')
     # getHistData('D:/pycode/data/dp/')
     dpath = 'D:/pycode/data/nsb/'
+    confpath = 'D:/pycode/AnalysisPython/conf/'
+
+    # 获取stockbasic数据，存储
+    # fetchStockBase(confpath)
+
+    # nsb = getNewStock(conf.get('dataConfig','stockbase'))
+
+    # 计算新股的某些数据
     # rs = newstock(dpath)
-    # print rs
     # prs = pandas.DataFrame(rs).to_csv('D:/pycode/data/ana/nsb.csv')
-    rs = newstockbuyandsell(dpath)
-    pandas.DataFrame(rs).to_csv('D:/pycode/data/ana/newstockbuyandsell_hpc.csv')
+
+
+    # 计算新股的买卖点策略
+    # rs = newstockbuyandsell(dpath)
+    # pandas.DataFrame(rs).to_csv('D:/pycode/data/ana/newstockbuyandsell_hpc.csv')
+
+    # 获取大盘数据
+    # DP('D:/pycode/data/dp',dps=['sh'], ktypes=['D'])
+    DP('D:/pycode/data/dp')
 
 
 if __name__ == "__main__":

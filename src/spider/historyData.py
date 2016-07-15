@@ -88,3 +88,11 @@ def getLast3YearsData(datapath, sid):
     :return:
     '''
     tushare.get_hist_data(sid).to_csv(os.path.join(datapath,sid+'.csv'))
+
+def fetchStockBase(datapath):
+    '''
+
+    :param datapath: 放在conf目录下
+    :return:
+    '''
+    tushare.get_stock_basics().to_csv(os.path.join(datapath,'stockbase.csv'))

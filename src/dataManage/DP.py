@@ -3,11 +3,14 @@ __author__ = 'gaosongbo'
 
 import os
 import pandas
+import tushare
+import sys
+from datetime import datetime, timedelta
 
 
-def weipan(datapath, zs=['sh'], ktypes=['15']):
+def _DP(datapath, sid, ktype):
     '''
-    检查尾盘是否有抢筹，看十五分钟的
+        获取不同种类的大盘指数函数
     :param datapath:
     :param zs:
     :param ktypes:
@@ -17,10 +20,54 @@ def weipan(datapath, zs=['sh'], ktypes=['15']):
     # for fn in os.listdir(datapath):
     # if fn.find()
     # for id in zs:
-    p = pandas.read_csv(os.path.join(datapath, 'sh_15.csv'), index_col='date')
+    ffn = os.path.join(datapath, sid + '_' + ktype + '.csv')
+    if os.path.isfile(ffn):
+        oldps = pandas.read_csv(ffn, index_col='date')
+        # start = datetime.strftime(datetime.strptime(oldps.index.max(), '%Y-%m-%d') + timedelta(days=1), '%Y-%m-%d')
+        start = datetime.strptime(oldps.index.max(), '%Y-%m-%d') + timedelta(days=1)
+        # 判断现有数据的时间
+        if (start - datetime.now()).days >= 0:
+            pass
+        else:
+            tmpffn = ffn + '.bak.csv'
+            tushare.get_hist_data(code=sid, ktype=ktype, start=datetime.strftime(start, '%Y-%m-%d')).to_csv(tmpffn)
+            newps = pandas.read_csv(tmpffn, index_col='date')
+            # 去重并存储
+            pandas.concat([oldps, newps]).drop_duplicates().to_csv(ffn)
+            # 删除临时文件
+            os.remove(tmpffn)
+        sys.exit()
+        # 因为从tushare读取的数据和从csv读取的数据index类型有差异（str和unioncode），先将数据存储到文件系统，之后读出来去重
+
+    else:
+        tushare.get_hist_data(code=sid, ktype=ktype).to_csv(ffn)
+
+
+# 大盘分时数据统计和汇总
+def DP(datapath, dps=None, ktypes=None):
+    '''
+
+    :param datapath:
+    :param dps:
+    :param ktypes:
+    :return:
+    '''
+    if dps == None:
+        dps = ['sh', 'sz', 'cyb', 'zxb', 'hs300', 'sz50']
+    if ktypes == None:
+        ktypes = ['D', 'W', 'M', '5', '15', '30', '60']
+    for dp in dps:
+        for ktype in ktypes:
+            _DP(datapath, dp, ktype)
+            print dp, ktype, 'ok'
 
 
 def newstock(dpath):
+    '''
+
+    :param dpath:
+    :return:
+    '''
     dpl = []
     for fn in os.listdir(dpath):
         ffn = os.path.join(dpath, fn)
@@ -91,11 +138,11 @@ def newstockbuyandsell(dpath):
             # 不给卖策略，计算最大可能收益，可以统计+5的概率，+10的概率
             # dpl.append(bs(dpath, sid, bid, slid=5, hp=True))
             # 不给卖策略，计算最大可能收益，可以统计+5的概率，+10的概率;hpc:hp控制按钮，为True时，统计开板到跌破5日线的最大值
-            dpl.append(bs(dpath, sid, bid, slid=5, hp=True,hpc=True))
+            dpl.append(bs(dpath, sid, bid, slid=5, hp=True, hpc=True))
     return dpl
 
 
-def bs(dpath, sid, bid=1, slid=5, hp=None,hpc=False):
+def bs(dpath, sid, bid=1, slid=5, hp=None, hpc=False):
     '''
 
     :param dpath:
@@ -173,7 +220,7 @@ def bs(dpath, sid, bid=1, slid=5, hp=None,hpc=False):
         if hpc:
             for i in range(t.index.size)[kbi:]:
                 if t.iloc[i]['close'] <= t.iloc[i]['ma5']:
-                    if i>res['bd']:
+                    if i > res['bd']:
                         res['hp'] = max(t.iloc[res['bd']:i]['high'])
                         res['lp'] = min(t.iloc[res['bd']:i]['low'])
                         res['ic'] = round((res['hp'] / res['bp'] - 1) * 100, 2)
