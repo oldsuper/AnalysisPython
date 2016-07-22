@@ -5,6 +5,7 @@ import tushare
 import pandas
 import os
 from datetime import datetime, timedelta
+import numpy
 
 
 def getNewStock(stockbase=''):
@@ -80,6 +81,7 @@ def getHistoryData(datapath, sid, start=None, end=None):
     filename = os.path.join(datapath, filenameX([sid, start, end])) + '.csv'
     AllData.to_csv(filename)
 
+
 def getLast3YearsData(datapath, sid):
     '''
 
@@ -87,7 +89,8 @@ def getLast3YearsData(datapath, sid):
     :param sid:
     :return:
     '''
-    tushare.get_hist_data(sid).to_csv(os.path.join(datapath,sid+'.csv'))
+    tushare.get_hist_data(sid).to_csv(os.path.join(datapath, sid + '.csv'))
+
 
 def fetchStockBase(datapath):
     '''
@@ -95,4 +98,74 @@ def fetchStockBase(datapath):
     :param datapath: 放在conf目录下
     :return:
     '''
-    tushare.get_stock_basics().to_csv(os.path.join(datapath,'stockbase.csv'))
+    tushare.get_stock_basics().to_csv(os.path.join(datapath, 'stockbase.csv'))
+
+
+from datetime import datetime, timedelta
+
+DAYFORMAT = '%Y-%m-%d'
+
+
+def _DP(datapath, sid, ktype):
+    '''
+        获取不同种类的大盘指数函数
+        20160720    改一下，保存临时文件
+    :param datapath:
+    :param zs:
+    :param ktypes:
+    :return:
+    '''
+
+    # for fn in os.listdir(datapath):
+    # if fn.find()
+    # for id in zs:
+    timestemp = datetime.strftime(datetime.now(), '%Y%m%d%H%M%S')
+    ffn = os.path.join(datapath, sid + '_' + ktype + '.csv')
+    if os.path.isfile(ffn):
+        oldps = pandas.read_csv(ffn, index_col='date')
+        # start = datetime.strftime(datetime.strptime(oldps.index.max(), '%Y-%m-%d') + timedelta(days=1), '%Y-%m-%d')
+        start = datetime.strptime(oldps.index.max().split(' ')[0], '%Y-%m-%d') + timedelta(days=1)
+        # 判断现有数据的时间
+        if (start - datetime.now()).days >= 0:
+            pass
+        else:
+            tmpffn = ffn + '.bak.csv'
+            toSaveData = tushare.get_hist_data(code=sid, ktype=ktype, start=datetime.strftime(start, '%Y-%m-%d'))
+            toSaveData['p_change_level'] = numpy.nan
+            toSaveData['volume_level'] = numpy.nan
+            toSaveData.to_csv(tmpffn)
+    else:
+        tmpffn=ffn
+        toSaveData = tushare.get_hist_data(code=sid, ktype=ktype)
+        toSaveData['p_change_level'] = numpy.nan
+        toSaveData['volume_level'] = numpy.nan
+        toSaveData.to_csv(ffn)
+
+
+# 大盘分时数据统计和汇总
+def DP(datapath, dps=None, ktypes=None):
+    '''
+
+    :param datapath:
+    :param dps:
+    :param ktypes:
+    :return:
+    '''
+    if dps == None:
+        dps = ['sh', 'sz', 'cyb', 'zxb', 'hs300', 'sz50']
+    if ktypes == None:
+        ktypes = ['D', 'W', 'M', '5', '15', '30', '60']
+
+    for dp in dps:
+        for ktype in ktypes:
+            _DP(datapath, dp, ktype)
+            print dp, ktype, 'ok'
+    # 合并去重
+
+    for fn in os.listdir(datapath):
+        ffn = os.path.join(datapath, fn)
+        if fn.find('.bak.csv') > 0:
+            op = pandas.read_csv(ffn, index_col='date')
+            np = pandas.read_csv(ffn[:0 - len('.bak.csv')], index_col='date')
+            pandas.concat([op, np]).drop_duplicates().to_csv(ffn[:0 - len('.bak.csv')])
+            os.remove(ffn)

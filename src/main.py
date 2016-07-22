@@ -84,8 +84,15 @@ def main():
 
     # 获取大盘数据
     # DP('D:/pycode/data/dp',dps=['sh'], ktypes=['D'])
-    DP('D:/pycode/data/dp')
+    # DP('D:/pycode/data/dp')
 
+    # 计算大盘指数安全度
+    # riskConfig = configFectory.config('D:/pycode/AnalysisPython/conf/dprisk.properties')
+    # print eval(riskConfig.get('dp', 'zsrisk'))['sh']
+    # print eval(riskConfig.get('dp', 'ktrisk'))
+    # dprisk('D:/pycode/data/dp', riskConfig)
+    # print createMyDL(pandas.read_csv('D:\\pycode\\data\\dp\\sh_d.csv',index_col='date').p_change.tolist())
+    dpriskRefreshData('D:\\pycode\\data\\dp_bak\\sh_D.csv')
 
 if __name__ == "__main__":
     # saomiao()

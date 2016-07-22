@@ -1,6 +1,9 @@
 __author__ = 'gaosongbo'
 import ConfigParser
-def config():
+def config(configFile=None):
     conf=ConfigParser.ConfigParser()
-    conf.read('../conf/ana.properties')
+    if configFile==None:
+        conf.read('../conf/ana.properties')
+    else:
+        conf.read(configFile)
     return conf

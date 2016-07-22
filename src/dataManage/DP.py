@@ -5,61 +5,8 @@ import os
 import pandas
 import tushare
 import sys
-from datetime import datetime, timedelta
-
-
-def _DP(datapath, sid, ktype):
-    '''
-        获取不同种类的大盘指数函数
-    :param datapath:
-    :param zs:
-    :param ktypes:
-    :return:
-    '''
-
-    # for fn in os.listdir(datapath):
-    # if fn.find()
-    # for id in zs:
-    ffn = os.path.join(datapath, sid + '_' + ktype + '.csv')
-    if os.path.isfile(ffn):
-        oldps = pandas.read_csv(ffn, index_col='date')
-        # start = datetime.strftime(datetime.strptime(oldps.index.max(), '%Y-%m-%d') + timedelta(days=1), '%Y-%m-%d')
-        start = datetime.strptime(oldps.index.max(), '%Y-%m-%d') + timedelta(days=1)
-        # 判断现有数据的时间
-        if (start - datetime.now()).days >= 0:
-            pass
-        else:
-            tmpffn = ffn + '.bak.csv'
-            tushare.get_hist_data(code=sid, ktype=ktype, start=datetime.strftime(start, '%Y-%m-%d')).to_csv(tmpffn)
-            newps = pandas.read_csv(tmpffn, index_col='date')
-            # 去重并存储
-            pandas.concat([oldps, newps]).drop_duplicates().to_csv(ffn)
-            # 删除临时文件
-            os.remove(tmpffn)
-        sys.exit()
-        # 因为从tushare读取的数据和从csv读取的数据index类型有差异（str和unioncode），先将数据存储到文件系统，之后读出来去重
-
-    else:
-        tushare.get_hist_data(code=sid, ktype=ktype).to_csv(ffn)
-
-
-# 大盘分时数据统计和汇总
-def DP(datapath, dps=None, ktypes=None):
-    '''
-
-    :param datapath:
-    :param dps:
-    :param ktypes:
-    :return:
-    '''
-    if dps == None:
-        dps = ['sh', 'sz', 'cyb', 'zxb', 'hs300', 'sz50']
-    if ktypes == None:
-        ktypes = ['D', 'W', 'M', '5', '15', '30', '60']
-    for dp in dps:
-        for ktype in ktypes:
-            _DP(datapath, dp, ktype)
-            print dp, ktype, 'ok'
+import math
+import numpy
 
 
 def newstock(dpath):
@@ -251,3 +198,88 @@ def bs(dpath, sid, bid=1, slid=5, hp=None, hpc=False):
         # 计算收益
         res['ic'] = round((res['sp'] / res['bp'] - 1) * 100, 2)
         return res
+
+
+def dprisk(dpath, riskConfig):
+    '''
+    按照规则计算大盘指数的安全度
+        1、格式化所有数据
+            把大盘涨跌幅、交易量分成n等分，比如-2~-1：0，-1~0：1，。。。
+        2、统计当日对应数字落在那个区间
+        3、统计之前出现相应情况的概率
+        4、定义一个初始的权重
+        5、回归x次的权重，得到最接近实际情况的权重值
+        6、使用5的权重，得到当前数据的安全指数
+    第一步：
+        1，2，3，6
+    :param dpath:
+    :return:
+    '''
+    print os.listdir(dpath)
+
+
+def dpriskRefreshData(ffn):
+    '''
+    计算level,日线
+    涨跌幅、交易量
+    :param ffn:
+    :return:
+    '''
+    p = pandas.read_csv(ffn,index_col='date')
+    vnames = ['p_change', 'volume']
+    for vname in vnames:
+        vlist = p.get(vname)
+        vLevelList = createMyDL(vlist.tolist())
+        vLevelListName = vname + '_level'
+        for i in p.index:
+            p.loc[i][vLevelListName] = _getLevel(vLevelList, p.loc[i][vname], i)
+    p.to_csv(ffn)
+    # 计算当前涨跌幅第二天的概率
+    lastIndex = p.index.max()
+
+
+
+def _getLevel(vll, v, index=None):
+    for i in range(len(vll)):
+        try:
+            if v >= vll[i][0] and v <= vll[i][1]:
+                return i
+        except:
+            print "error", v, i, type(i), vll[i], type(index), index
+
+
+def createMyDL(vl):
+    '''
+    获取诸如[1, 2, 4, 8, 16, 8, 4, 2, 1]的队列
+    把极端情况列出来
+    :param vl:
+    :return:
+    '''
+    dl = []
+    svl = vl
+    vll = len(vl)
+    svl.sort()
+    fs = 9
+    yz = 2
+    tl = []
+    for i in range(fs):
+        tl.insert(i, int(math.pow(yz, (fs - 1) / 2 - math.fabs((fs - 1) / 2 - i))))
+    print tl
+    tt = sum(tl)
+    ntl = []
+    for i in range(fs):
+        if i > 0:
+            ntl.insert(i, tl[i] * 1.0 / sum(tl) + ntl[i - 1])
+        else:
+            ntl.insert(i, tl[i] * 1.0 / sum(tl))
+
+    for i in range(fs):
+        if i == fs - 1:
+            tmp = svl[int(ntl[i - 1] * vll):]
+        if i == 0:
+            tmp = svl[:int(ntl[i] * vll)]
+        if i > 0 and i < fs - 1:
+            tmp = svl[int(ntl[i - 1] * vll):int(ntl[i] * vll)]
+        # print tmp
+        dl.insert(i, (min(tmp), max(tmp)))
+    return dl
