@@ -9,6 +9,7 @@ from globalFactory import configFectory
 from spider.todayDataSpider import *
 from spider.historyData import *
 from dataManage.DP import *
+from base.basemethod import *
 import time
 import threading
 import math
@@ -94,6 +95,28 @@ def main():
     # print createMyDL(pandas.read_csv('D:\\pycode\\data\\dp\\sh_d.csv',index_col='date').p_change.tolist())
     dpriskRefreshData('D:\\pycode\\data\\dp_bak\\sh_D.csv')
 
+
+def test():
+    sh = 'd:/pycode/data/dp/sh_D.csv'
+    hgt = 'd:/pycode/AnalysisPython/data/hgtHistory.csv'
+    fd = 10
+    shp = pandas.read_csv(sh, index_col='date')
+    # hgtp = pandas.read_csv(hgt, index_col='date')
+    tmp = shp.volume.tolist()
+    tmp.sort()
+    shp_vol_fw_r_list = chunks(tmp, fd)
+    shp_vol_fw = []
+    for tmpl in shp_vol_fw_r_list:
+        shp_vol_fw.append((min(tmpl), max(tmpl)))
+    for index in shp.index:
+        shp.loc[index]['volume'] = getindex(shp_vol_fw,shp.loc[index]['volume'])
+    print shp.iloc[1:30]
+def getindex(arr,v):
+    for i in range(len(arr)):
+        mi,mx = arr[i]
+        if mi<=v and v<=mx:
+            return i
+
 if __name__ == "__main__":
     # saomiao()
     # print configFectory.config()
@@ -124,4 +147,7 @@ if __name__ == "__main__":
 
     # 获取当前stockbase数据
     # todayDataSpider.getStockBase()
-    main()
+    # main()
+
+    # 写初步的统计代码
+    test()
