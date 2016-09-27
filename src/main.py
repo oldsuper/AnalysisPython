@@ -97,25 +97,81 @@ def main():
 
 
 def test():
-    sh = 'd:/pycode/data/dp/sh_D.csv'
-    hgt = 'd:/pycode/AnalysisPython/data/hgtHistory.csv'
-    fd = 10
-    shp = pandas.read_csv(sh, index_col='date')
-    # hgtp = pandas.read_csv(hgt, index_col='date')
-    tmp = shp.volume.tolist()
-    tmp.sort()
-    shp_vol_fw_r_list = chunks(tmp, fd)
-    shp_vol_fw = []
-    for tmpl in shp_vol_fw_r_list:
-        shp_vol_fw.append((min(tmpl), max(tmpl)))
-    for index in shp.index:
-        shp.loc[index]['volume'] = getindex(shp_vol_fw,shp.loc[index]['volume'])
-    print shp.iloc[1:30]
-def getindex(arr,v):
+    '''
+
+    '''
+    # sh = 'd:/pycode/data/dp/sh_D.csv'
+    # hgt = 'd:/pycode/AnalysisPython/data/hgtHistory.csv'
+    data_file_path = 'd:/pycode/data/dp/sh_D.csv'
+    to_update_column_list = ['volume', 'p_change']
+    pandas_data = transfer_csv_to_pandas(data_file_path)
+    sortedList_list = []
+    for column in to_update_column_list:
+        sortedList_list.append(get_sortedList_by_column(pandas_data.get(column).tolist()))
+    data = update_data(pandas_data, to_update_column_list, sortedList_list)
+    # 数据完成，开始预测
+    input = [1382428, -0.2]
+    # 预测第二天的涨跌
+    prediction = []
+    for column in to_update_column_list:
+        v_level = getLevel(sortedList_list[to_update_column_list.index(column)], input[to_update_column_list.index(column)])
+        v_level_dict = {}.fromkeys(sortedList_list[to_update_column_list.index(column)])
+        for key in v_level_dict:
+            for index in data[eval('data.'+column+'_level')==key]:
+                v_level_dict[data[]]
+
+
+
+def get_sortedList_by_column(org_list, slice_count=10):
+    '''
+    这里没有写好
+    :param org_list:
+    :param slice_count:
+    :return:
+    '''
+    org_list.sort()
+    tmp_sorted_list = chunks(org_list, slice_count)
+    sorted_list = []
+    for item_list in tmp_sorted_list:
+        sorted_list.append((min(item_list), max(item_list)))
+    return sorted_list
+
+
+def transfer_csv_to_pandas(data_file_path, index_column='date'):
+    return pandas.read_csv(data_file_path, index_col=index_column)
+
+
+def update_data(pandas_data, to_update_column_list, sortedList_list):
+    data = pandas_data
+    return fdata(data, to_update_column_list, sortedList_list)
+
+
+def getLevel(arr, v):
     for i in range(len(arr)):
-        mi,mx = arr[i]
-        if mi<=v and v<=mx:
+        mi, mx = arr[i]
+        if mi <= v and v <= mx:
             return i
+
+
+def fdata(tmpP, cols, sortedList_list):
+    '''
+    :param tmpP:
+    :param cols:
+    :param fd:
+    :return:
+    '''
+
+    resP = tmpP
+    coltail = '_level'
+    for col in cols:
+        col_level = col + coltail
+        if resP.columns.tolist().count(col_level) == 0:
+            resP[col_level] = ''
+        shp_vol_fw = sortedList_list[cols.index(col)]
+        for index in resP.index:
+            resP.set_value(index, col_level, getLevel(shp_vol_fw, resP.loc[index][col]))
+    return resP
+
 
 if __name__ == "__main__":
     # saomiao()
