@@ -3,9 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/AnalysisPython.iml" filepath="$PROJECT_DIR$/.idea/AnalysisPython.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../TestXuriSelenium/.idea/TestXuriSelenium.iml" filepath="$PROJECT_DIR$/../TestXuriSelenium/.idea/TestXuriSelenium.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../tools/.idea/tools.iml" filepath="$PROJECT_DIR$/../tools/.idea/tools.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../union_msg/.idea/union_msg.iml" filepath="$PROJECT_DIR$/../union_msg/.idea/union_msg.iml" />
+      <module fileurl="file://D:/pyCodes/sinoProject/.idea/sinoProject.iml" filepath="D:/pyCodes/sinoProject/.idea/sinoProject.iml" />
     </modules>
   </component>
 </project>

@@ -98,7 +98,9 @@ def fetchStockBase(datapath):
     :param datapath: 放在conf目录下
     :return:
     '''
-    tushare.get_stock_basics().to_csv(os.path.join(datapath, 'stockbase.csv'))
+    stockbase_filepath = os.path.join(datapath, 'stockbase.csv')
+    os.remove(stockbase_filepath)
+    tushare.get_stock_basics().to_csv(stockbase_filepath)
 
 
 from datetime import datetime, timedelta
@@ -135,7 +137,7 @@ def _DP(datapath, sid, ktype):
             toSaveData['volume_level'] = numpy.nan
             toSaveData.to_csv(tmpffn)
     else:
-        tmpffn=ffn
+        tmpffn = ffn
         toSaveData = tushare.get_hist_data(code=sid, ktype=ktype)
         toSaveData['p_change_level'] = numpy.nan
         toSaveData['volume_level'] = numpy.nan
@@ -155,6 +157,9 @@ def DP(datapath, dps=None, ktypes=None):
         dps = ['sh', 'sz', 'cyb', 'zxb', 'hs300', 'sz50']
     if ktypes == None:
         ktypes = ['D', 'W', 'M', '5', '15', '30', '60']
+
+    if not os.path.isdir(datapath):
+        os.mkdir(datapath)
 
     for dp in dps:
         for ktype in ktypes:
