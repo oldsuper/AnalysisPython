@@ -7,6 +7,8 @@ import os
 from datetime import datetime, timedelta
 import numpy
 
+_STOCKBASE_FILEPATH = 'D:/tmp/personal/data/base/stockbase.csv'
+
 
 def getNewStock(stockbase=''):
     '''
@@ -46,6 +48,27 @@ def getStockBase(stockbase):
 '''
 
 '''
+
+
+def get_history_data_new(datapath, sid, start=None, end=None):
+    '''
+
+    :param datapath:
+    :param sid:
+    :param start:
+    :param end:
+    :return:
+    '''
+
+    stock_file_fullname = os.path.join(datapath, str(sid) + '.csv')
+    if not os.path.isfile(stock_file_fullname):
+        stock_ps_data = pandas.read_csv(stock_file_fullname, index_col='date')
+        start = stock_ps_data.index.max()
+    else:
+        if start == None:
+            start = pandas.read_csv(_STOCKBASE_FILEPATH, index_col='code').loc[int(sid)]
+
+    return stock_file_fullname
 
 
 def getHistoryData(datapath, sid, start=None, end=None):
@@ -92,15 +115,25 @@ def getLast3YearsData(datapath, sid):
     tushare.get_hist_data(sid).to_csv(os.path.join(datapath, sid + '.csv'))
 
 
-def fetchStockBase(datapath):
+def fetch_stockbase(datapath):
     '''
-
+        _STOCKBASE_FILEPATH
     :param datapath: 放在conf目录下
     :return:
     '''
     stockbase_filepath = os.path.join(datapath, 'stockbase.csv')
+    new_stockbase_data = tushare.get_stock_basics()
+    if os.path.isfile(stockbase_filepath):
+        if new_stockbase_data.get('timeToMarket').max() == pandas.read_csv(new_stockbase_data):
+            pass
     os.remove(stockbase_filepath)
     tushare.get_stock_basics().to_csv(stockbase_filepath)
+
+    stockbase_filename = 'stockbase_' + 'dd'
+    for filename in os.listdir(_STOCKBASE_FILEPATH):
+        if filename.startswith('stockbase'):
+            stockbase_filename = filename
+            break
 
 
 from datetime import datetime, timedelta
@@ -133,14 +166,14 @@ def _DP(datapath, sid, ktype):
         else:
             tmpffn = ffn + '.bak.csv'
             toSaveData = tushare.get_hist_data(code=sid, ktype=ktype, start=datetime.strftime(start, '%Y-%m-%d'))
-            toSaveData['p_change_level'] = numpy.nan
-            toSaveData['volume_level'] = numpy.nan
+            # toSaveData['p_change_level'] = numpy.nan
+            # toSaveData['volume_level'] = numpy.nan
             toSaveData.to_csv(tmpffn)
     else:
         tmpffn = ffn
         toSaveData = tushare.get_hist_data(code=sid, ktype=ktype)
-        toSaveData['p_change_level'] = numpy.nan
-        toSaveData['volume_level'] = numpy.nan
+        # toSaveData['p_change_level'] = numpy.nan
+        # toSaveData['volume_level'] = numpy.nan
         toSaveData.to_csv(ffn)
 
 
@@ -174,3 +207,154 @@ def DP(datapath, dps=None, ktypes=None):
             np = pandas.read_csv(ffn[:0 - len('.bak.csv')], index_col='date')
             pandas.concat([op, np]).drop_duplicates().to_csv(ffn[:0 - len('.bak.csv')])
             os.remove(ffn)
+
+
+# new 2016 11 8 add
+def get_stock_base(data_root_path, date_format_str):
+    '''
+        get the stock basic info
+    :param data_root_path:
+    :param date_format_str:
+    :return:
+    '''
+    stock_base_path = os.path.join(data_root_path, 'base').lower()
+    if not os.path.isdir(stock_base_path):
+        os.mkdir(stock_base_path)
+    today_date_str = datetime.strftime(datetime.now(), date_format_str)
+    stock_startwords = 'stockbase'
+    stock_base_file_name = stock_startwords + '_' + today_date_str + '.csv'
+    for file_name in os.listdir(stock_base_path):
+        if file_name.startswith(stock_startwords):
+            stock_base_file_name = file_name
+    stock_base_full_file_name = os.path.join(stock_base_path, stock_base_file_name)
+    if stock_base_file_name.find(today_date_str) > -1:
+        pass
+    else:
+        stock_base_data = tushare.get_stock_basics()
+        stock_base_data.to_csv(stock_base_full_file_name)
+    return stock_base_full_file_name
+
+
+def get_dp_history_data(data_root_path, time_format_str, date_format_str, dp_codes=None, ktypes=None):
+    '''
+        收盘时间每日1500
+    :param data_root_path:
+    :param date_format_str: dps = ['sh', 'sz', 'cyb', 'zxb', 'hs300', 'sz50']
+    :param ktypes: ktypes = ['D', 'W', 'M', '5', '15', '30', '60']
+    :return:
+    '''
+    dp_data_path = os.path.join(data_root_path, 'DP').lower()
+    if not os.path.isdir(dp_data_path):
+        os.mkdir(dp_data_path)
+    if dp_codes == None:
+        dp_codes = ['sh', 'sz', 'cyb', 'zxb', 'hs300', 'sz50']
+    if ktypes == None:
+        ktypes = ['D', 'W', 'M', '5', '15', '30', '60']
+    # dp_data_dict = {}
+    # for file_name in os.listdir(dp_data_path):
+    # dp_code, ktype, last_get_time_str = file_name.split('.')[0].split('_')
+    # dp_data_dict[dp_code] = {ktype: [last_get_time_str, file_name]}
+    for dp_code in dp_codes:
+        for ktype in ktypes:
+            this_time_str = datetime.strftime(datetime.now(), time_format_str)
+            last_update_dp_file_name = get_old_file_name(dp_data_path, dp_code, ktype)
+            if last_update_dp_file_name is not None:
+                last_get_time_str = last_update_dp_file_name.split('.')[0].split('_')[-1]
+                # this_time_str = datetime.strftime(datetime.now(), date_format_str)
+                if (datetime.strptime(last_get_time_str, time_format_str) - datetime.strptime(
+                        (datetime.strftime(datetime.now(), date_format_str) + '150000'),
+                        time_format_str)).total_seconds() >= 0:
+                    dp_file_name = last_update_dp_file_name
+                else:
+                    dp_file_name = _get_dp_history_data(dp_data_path, dp_code, ktype, this_time_str,
+                                                        last_update_dp_file_name,
+                                                        start=last_get_time_str[:8])
+            else:
+                last_get_time_str = None
+                dp_file_name = _get_dp_history_data(dp_data_path, dp_code, ktype, time_format_str,
+                                                    last_get_time_str, )
+            print dp_file_name, 'ok'
+    return 1
+
+
+def get_old_file_name(data_path, *args):
+    for file_name in os.listdir(data_path):
+        if file_name.startswith('_'.join(args)):
+            return file_name
+    return None
+
+
+def _get_dp_history_data(dp_data_path, dp_code, ktype, time_format_str, last_update_file_name=None, start=None,
+                         end=None):
+    '''
+        获取数据的实现函数
+        get_hist_data
+    :return:
+    '''
+    time_str = datetime.strftime(datetime.now(), time_format_str)
+    dp_file_name = dp_code + '_' + ktype + '_' + time_str + '.csv'
+    dp_full_file_name = os.path.join(dp_data_path, dp_file_name)
+    dp_data = tushare.get_hist_data(dp_code, ktype=ktype, start=start, end=end)
+    if last_update_file_name is not None:
+        last_update_dp_data = pandas.read_csv(os.path.join(dp_data_path, last_update_file_name), index_col='date')
+        dp_data = pandas.concat([last_update_dp_data, dp_data]).drop_duplicates().sort_index(ascending=False)
+    dp_data.to_csv(dp_full_file_name)
+    if last_update_file_name is not None:
+        os.remove(os.path.join(dp_data_path, last_update_file_name))
+
+    return dp_file_name
+
+
+def get_stock_history_data(data_root_path, time_format_str, date_format_str, stock_codes=None, ktype='D'):
+    '''
+
+    :return:
+    '''
+    stocks_data_path = os.path.join(data_root_path, 'stocks').lower()
+    max_days_per_get = 365
+    year_begin_day = '-01-01'
+    year_end_day = '-12-31'
+    if not os.path.isdir(stocks_data_path):
+        os.mkdir(stocks_data_path)
+    if stock_codes == None:
+        return None
+    stock_basic_file_name = get_stock_basic_file_name(data_root_path, date_format_str)
+    stock_basic_data = pandas.read_csv(stock_basic_file_name, index_col='code')
+    today_str = datetime.strftime(datetime.now(), date_format_str)
+    for stock_code in stock_codes:
+        last_stock_file_name = get_old_file_name(stocks_data_path, stock_code)
+        stock_time_to_market = stock_basic_data.loc[int(stock_code)]['timeToMarket']
+        stock_file_name = stock_code + '_' + ktype + '_' + today_str + '.csv'
+        if last_stock_file_name is None:
+            now_year = datetime.now().year
+            start = int(str(stock_time_to_market)[:4])
+            stock_data_list = []
+            while (start <= now_year):
+                print
+                stock_data_list.append(tushare.get_h_data(stock_code, start=str(start) + year_begin_day,
+                                                          end=str(start) + year_end_day))
+                start += 1
+            pandas.concat(stock_data_list).drop_duplicates().sort_index(ascending=False).to_csv(
+                os.path.join(stocks_data_path, stock_file_name))
+        else:
+            # 超过三年的不管
+            last_get_day_str = last_stock_file_name.split('.')[0].split('_')[-1]
+            new_stock_data = tushare.get_h_data(stock_code, start=last_get_day_str)
+            if new_stock_data is None:
+                return stock_file_name
+            # 因为index值的数据类型不同存储之后再读出来
+            new_stock_data.to_csv(os.path.join(stocks_data_path, stock_file_name))
+            new_stock_data = pandas.read_csv(os.path.join(stocks_data_path, stock_file_name), index_col='date')
+            old_stock_data = pandas.read_csv(os.path.join(stocks_data_path, last_stock_file_name), index_col='date')
+            pandas.concat([new_stock_data, old_stock_data]).drop_duplicates().sort_index(ascending=False).to_csv(
+                os.path.join(stocks_data_path, stock_file_name))
+            os.remove(os.path.join(stocks_data_path, last_stock_file_name))
+    return stock_file_name
+
+
+def get_stock_basic_file_name(data_root_path, date_format_str):
+    stock_base_path = os.path.join(data_root_path, 'base').lower()
+    for file_name in os.listdir(stock_base_path):
+        if file_name.startswith('stockbase'):
+            return os.path.join(stock_base_path, file_name)
+    return get_stock_base(data_root_path, date_format_str)
