@@ -210,13 +210,15 @@ def DP(datapath, dps=None, ktypes=None):
 
 
 # new 2016 11 8 add
-def get_stock_base(data_root_path, date_format_str):
+def get_stock_base(config):
     '''
         get the stock basic info
     :param data_root_path:
     :param date_format_str:
     :return:
     '''
+    data_root_path = config.dataConfig.data_root_path
+    date_format_str = config.dataConfig.date_format_str
     stock_base_path = os.path.join(data_root_path, 'base').lower()
     if not os.path.isdir(stock_base_path):
         os.mkdir(stock_base_path)
@@ -235,7 +237,7 @@ def get_stock_base(data_root_path, date_format_str):
     return stock_base_full_file_name
 
 
-def get_dp_history_data(data_root_path, time_format_str, date_format_str, dp_codes=None, ktypes=None):
+def get_dp_history_data(config, dp_codes=None, ktypes=None):
     '''
         收盘时间每日1500
     :param data_root_path:
@@ -243,6 +245,9 @@ def get_dp_history_data(data_root_path, time_format_str, date_format_str, dp_cod
     :param ktypes: ktypes = ['D', 'W', 'M', '5', '15', '30', '60']
     :return:
     '''
+    data_root_path = config.get('data_root_path')
+    time_format_str = config.get('time_format_str')
+    date_format_str = config.get('date_format_str')
     dp_data_path = os.path.join(data_root_path, 'DP').lower()
     if not os.path.isdir(dp_data_path):
         os.mkdir(dp_data_path)
@@ -257,7 +262,7 @@ def get_dp_history_data(data_root_path, time_format_str, date_format_str, dp_cod
     for dp_code in dp_codes:
         for ktype in ktypes:
             this_time_str = datetime.strftime(datetime.now(), time_format_str)
-            last_update_dp_file_name = get_old_file_name(dp_data_path, dp_code, ktype)
+            last_update_dp_file_name = __get_old_file_name(dp_data_path, dp_code, ktype)
             if last_update_dp_file_name is not None:
                 last_get_time_str = last_update_dp_file_name.split('.')[0].split('_')[-1]
                 # this_time_str = datetime.strftime(datetime.now(), date_format_str)
@@ -266,25 +271,25 @@ def get_dp_history_data(data_root_path, time_format_str, date_format_str, dp_cod
                         time_format_str)).total_seconds() >= 0:
                     dp_file_name = last_update_dp_file_name
                 else:
-                    dp_file_name = _get_dp_history_data(dp_data_path, dp_code, ktype, this_time_str,
+                    dp_file_name = __get_dp_history_data(dp_data_path, dp_code, ktype, this_time_str,
                                                         last_update_dp_file_name,
                                                         start=last_get_time_str[:8])
             else:
                 last_get_time_str = None
-                dp_file_name = _get_dp_history_data(dp_data_path, dp_code, ktype, time_format_str,
+                dp_file_name = __get_dp_history_data(dp_data_path, dp_code, ktype, time_format_str,
                                                     last_get_time_str, )
             print dp_file_name, 'ok'
     return 1
 
 
-def get_old_file_name(data_path, *args):
+def __get_old_file_name(data_path, *args):
     for file_name in os.listdir(data_path):
         if file_name.startswith('_'.join(args)):
             return file_name
     return None
 
 
-def _get_dp_history_data(dp_data_path, dp_code, ktype, time_format_str, last_update_file_name=None, start=None,
+def __get_dp_history_data(dp_data_path, dp_code, ktype, time_format_str, last_update_file_name=None, start=None,
                          end=None):
     '''
         获取数据的实现函数
@@ -305,54 +310,103 @@ def _get_dp_history_data(dp_data_path, dp_code, ktype, time_format_str, last_upd
     return dp_file_name
 
 
-def get_stock_history_data(data_root_path, time_format_str, date_format_str, stock_codes=None, ktype='D'):
+def get_stock_history_data(config, stock_codes=None, ktype='D',
+                           sub_data_path=None, is_start_new_request=False):
     '''
 
     :return:
     '''
-    stocks_data_path = os.path.join(data_root_path, 'stocks').lower()
+    now_year = datetime.now().year
+    data_root_path=config.dataConfig.data_root_path
+    date_format_str=config.dataConfig.date_format_str
+
+    if sub_data_path is None:
+        stocks_data_path = os.path.join(data_root_path, 'stocks').lower()
+    else:
+        stocks_data_path = os.path.join(data_root_path, sub_data_path).lower()
     max_days_per_get = 365
     year_begin_day = '-01-01'
     year_end_day = '-12-31'
     if not os.path.isdir(stocks_data_path):
         os.mkdir(stocks_data_path)
-    if stock_codes == None:
+    if stock_codes is None:
         return None
-    stock_basic_file_name = get_stock_basic_file_name(data_root_path, date_format_str)
+    if not isinstance(stock_codes, list):
+        stock_codes = [stock_codes]
+    stock_basic_file_name = __get_stock_basic_file_name(data_root_path, date_format_str)
     stock_basic_data = pandas.read_csv(stock_basic_file_name, index_col='code')
     today_str = datetime.strftime(datetime.now(), date_format_str)
     for stock_code in stock_codes:
-        last_stock_file_name = get_old_file_name(stocks_data_path, stock_code)
-        stock_time_to_market = stock_basic_data.loc[int(stock_code)]['timeToMarket']
-        stock_file_name = stock_code + '_' + ktype + '_' + today_str + '.csv'
-        if last_stock_file_name is None:
-            now_year = datetime.now().year
-            start = int(str(stock_time_to_market)[:4])
-            stock_data_list = []
-            while (start <= now_year):
-                print
-                stock_data_list.append(tushare.get_h_data(stock_code, start=str(start) + year_begin_day,
-                                                          end=str(start) + year_end_day))
-                start += 1
-            pandas.concat(stock_data_list).drop_duplicates().sort_index(ascending=False).to_csv(
-                os.path.join(stocks_data_path, stock_file_name))
+        stock_code = str(stock_code).rjust(6, '0')
+        last_stock_file_name = __get_old_file_name(stocks_data_path, stock_code)
+        stock_time_to_market = str(stock_basic_data.loc[int(stock_code)]['timeToMarket'])
+        if len(stock_time_to_market) == 8:
+            stock_time_to_market = '-'.join(
+                [stock_time_to_market[:4], stock_time_to_market[4:6], stock_time_to_market[6:]])
         else:
-            # 超过三年的不管
-            last_get_day_str = last_stock_file_name.split('.')[0].split('_')[-1]
-            new_stock_data = tushare.get_h_data(stock_code, start=last_get_day_str)
-            if new_stock_data is None:
-                return stock_file_name
-            # 因为index值的数据类型不同存储之后再读出来
-            new_stock_data.to_csv(os.path.join(stocks_data_path, stock_file_name))
-            new_stock_data = pandas.read_csv(os.path.join(stocks_data_path, stock_file_name), index_col='date')
-            old_stock_data = pandas.read_csv(os.path.join(stocks_data_path, last_stock_file_name), index_col='date')
-            pandas.concat([new_stock_data, old_stock_data]).drop_duplicates().sort_index(ascending=False).to_csv(
-                os.path.join(stocks_data_path, stock_file_name))
-            os.remove(os.path.join(stocks_data_path, last_stock_file_name))
+            stock_time_to_market = '-'.join([today_str[:4], today_str[4:6], today_str[6:]])
+        stock_file_name = stock_code + '_' + ktype + '_' + today_str + '.csv'
+        # try:
+        if True:
+            if last_stock_file_name is None:
+                print stock_code, stock_time_to_market
+                start = max(2007, int(stock_time_to_market[:4]))
+                stock_data_list = []
+                is_begin = 1
+                end = start
+                temp = tushare.get_h_data(stock_code, start=stock_time_to_market, end=today_str)
+                if temp is None:
+                    return None
+                if temp.size == 0:
+                    return None
+                try:
+                    temp.to_csv(os.path.join(stocks_data_path, stock_file_name))
+                except Exception, e:
+                    print e, stock_code
+                    # while (start <= now_year):
+                    # if start + 3 > now_year:
+                    # end = now_year
+                    #     else:
+                    #         end = start + 2
+                    #     if is_begin == 0:
+                    #         temp = tushare.get_h_data(stock_code, start=str(start) + year_begin_day,
+                    #                                   end=str(end) + year_end_day)
+                    #         is_begin += 1
+                    #     else:
+                    #         temp = tushare.get_h_data(stock_code, start=str(start) + year_begin_day,
+                    #                                   end=str(end) + year_end_day)
+                    #     if (temp is not None) and (len(temp) > 0):
+                    #         stock_data_list.append(temp)
+                    #     start = end + 1
+                    # if stock_data_list is None:
+                    #     return None
+                    # if len(stock_data_list) > 0:
+                    #     pandas.concat(stock_data_list).drop_duplicates().sort_index(ascending=False).to_csv(
+                    #         os.path.join(stocks_data_path, stock_file_name))
+                    # else:
+                    #     print "error ,stock_data_list.len == 0"
+            else:
+                # 如果存在文件，则不新发起请求
+                if is_start_new_request:
+                    return stock_file_name
+                # 超过三年的不管
+                last_get_day_str = last_stock_file_name.split('.')[0].split('_')[-1]
+                new_stock_data = tushare.get_h_data(stock_code, start=last_get_day_str)
+                if new_stock_data is None:
+                    return stock_file_name
+                # 因为index值的数据类型不同存储之后再读出来
+                new_stock_data.to_csv(os.path.join(stocks_data_path, stock_file_name))
+                new_stock_data = pandas.read_csv(os.path.join(stocks_data_path, stock_file_name), index_col='date')
+                old_stock_data = pandas.read_csv(os.path.join(stocks_data_path, last_stock_file_name), index_col='date')
+                pandas.concat([new_stock_data, old_stock_data]).drop_duplicates().sort_index(ascending=False).to_csv(
+                    os.path.join(stocks_data_path, stock_file_name))
+                os.remove(os.path.join(stocks_data_path, last_stock_file_name))
+                # except Exception, e:
+                # print stock_code, e
     return stock_file_name
 
 
-def get_stock_basic_file_name(data_root_path, date_format_str):
+def __get_stock_basic_file_name(data_root_path, date_format_str):
     stock_base_path = os.path.join(data_root_path, 'base').lower()
     for file_name in os.listdir(stock_base_path):
         if file_name.startswith('stockbase'):
