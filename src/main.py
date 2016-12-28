@@ -135,8 +135,12 @@ if __name__ == '__main__':
     # useThreading()
     # print len(subnew_dict[max(subnew_dict.keys())])
     conf = configFectory.config_class()
-    subnew_dict = subnew.get_subnewstock_list(conf, )
-
+    # subnew_dict = subnew.get_subnewstock_list(conf, )
+    hd = forecast._analytics_history_data(conf, '300558', ktype='d')
+    print hd.columns
+    for column in hd.columns:
+        print column,hd[column].max(),hd[column].min()
+    print hd.index.size
     # stock_base_info = pandas.read_csv('d:/tmp/personal/data/base/stockbase_20161101.csv', index_col='code')
     # for stock_code in stock_base_info.index:
     # historyData.get_stock_history_data(conf, stock_codes=stock_code, is_start_new_request=True)

@@ -7,6 +7,8 @@ import os
 import sys
 import time
 import numpy
+import math
+import re
 
 _DATE_FORMAT_STR = '%Y%m%d'
 _TIME_FORMAT_STR = '%Y%m%d%H%M%S'
@@ -154,7 +156,7 @@ def next_days_rise(stockid, m=_LAST_M_DAYS, n=_FUTURE_N_DAYS, start_day=None, li
     return res
 
 
-def format_dimension_value_list(dimension_value_list, section=_SECTION):
+def format_dimension_value_list(dimension_value_list, section=7):
     format_dimension_list = []
     to_mod = len(dimension_value_list) / section + 1
     j = 0
@@ -181,6 +183,13 @@ def get_format_dimension_value(format_dimension_list, orign_value):
         return len(format_dimension_list) - 1
 
 
+def _get_format_dimension_value(format_dimension_list, orign_value):
+    for i in range(len(format_dimension_list)):
+        if orign_value <= format_dimension_list[i]:
+            return i
+    return len(format_dimension_list)
+
+
 def wight_function(last_m_days, next_days):
     return 1
 
@@ -203,26 +212,209 @@ def get_nextN_days_change_per(value_column_name, value_level, pandas_data_format
 def _weight_based_time(days):
     '''
         希望是一个边际递减的的函数
+        1、不能是负数
+        2、最近N天的效果比较大
+        3、近似归一化（先加后除）
+        大概满足需求
+        for i in range(1, 200):
+            print i, _weight_based_time(i)
+        1   1.06
+        2   0.94
+        10  0.67
+        100 0.279
+        199 0.163
     '''
-    return 10 / days
+    r = (math.log(days / 5.0, 0.3) + 3.2) / 4
+    if r < 0:
+        r = 0
+    return r
 
 
-def forecast_base_function(history_matrix, weight_of_dimension, dimension_values):
+def forecast_base_function(history_matrix, weight_of_dimension, current_dimension_values):
     '''
-
+    inner param:
+        d  ~ dimension
+        dv ~ dimension_value
     :param history_matrix:
-        a: { 10 : [], 20:[], ... } # 所有数据都和时间有关系
-        b: { 10 : [], 20:[], ... }
+        {
+        hd:{
+
+                d1: { d1p1 : [matrix], d1p2 : [], ... } # 所有数据都和时间有关系
+                    ---->
+                        { d1p1 : [] * weight_based_time, ....}
+                d2: { d2p1 : [], d2p2 : [], ... }
+                ...
+            }
+        mv:{
+                d1:[ [], [], [], ... ],
+                d2:[]
+                ...
+            }
+        }
     :param weight_of_dimension:
-        a: wa, b: wb, ...
-    :param dimension_values:
-        a: va, b: vb, ...
+        d1: wd1, b: wd2, ...
+    :param current_dimension_values:
+        {d1: dv1, d2: dv2, ...}
     :return:
         [0.x, 0.x, 0.x, ...]
     '''
-    res = []
-    dimension_history_matrix = {}
-    for dimention in dimension_values:
-        dimension_history_matrix[dimention] = []
+    res = {}
+    based_time_list = []
+    time_weight = {}
+    for d in history_matrix['hd']:
+        for k in history_matrix['hd'][d]:
+            based_time_list.append(k)
+    based_time_list = {}.fromkeys(based_time_list).keys()
+    for t in based_time_list:
+        time_weight[t] = _weight_based_time(t)
 
-    return
+    for d in history_matrix['hd']:
+        for t in history_matrix['hd'][d]:
+            if isinstance(history_matrix['hd'][d][t], list):
+                history_matrix['hd'][d][t] = numpy.matrix(history_matrix['hd'][d][t])
+            history_matrix['hd'][d][t] = history_matrix['hd'][d][t] * time_weight[t] * weight_of_dimension[d]
+            dimension_format_value = _get_format_dimension_value(history_matrix['mv'][d], current_dimension_values[d])
+            if res.keys().count(d) == 0:
+                res[d] = history_matrix['hd'][d][t][dimension_format_value]
+            else:
+                res[d] = res[d] + history_matrix['hd'][d][t][dimension_format_value]
+    x = None
+    for v in res.values():
+        if x is None:
+            x = v
+        else:
+            x += v
+    x = x.tolist()[0]
+    s = sum(x)
+    return [i / s for i in x]
+
+
+'''
+    test code
+
+h = {
+    'hd': {
+        'a': {
+            10: numpy.matrix([[2, 3, 3], [3, 1, 4], [7, 0, 1]]),
+            20: numpy.matrix([[5, 5, 5], [7, 2, 6], [2, 10, 3]])
+        },
+        'b': {
+            10: numpy.matrix([[2, 3, 2], [3, 1, 3], [6, 0, 1]]),
+            20: numpy.matrix([[9, 3, 3], [3, 8, 4], [7, 7, 1]])
+        }
+    },
+    'mv': {
+        'a': [10, 20],
+        'b': [1, 4]
+    }
+}
+w = {'a': 2.0, 'b': 1.2}
+cv = {'a': 20, 'b': 15}
+
+res = forecast_base_function(h, w, cv)
+print res
+
+# for i in range(1, 200):
+#     print i, _weight_based_time(i)
+'''
+
+def _get_full_filename(filepath, stock_code, ktype):
+    '''
+
+    :param
+    filepath:
+    :param
+    stock_code:
+    :param
+    ktype:
+    :return:
+    '''
+    full_filename = ''
+    search = '_'.join([stock_code, ktype])
+    for filename in os.listdir(filepath):
+        if filename.startswith(search):
+            return os.path.join(filepath, filename)
+
+    return full_filename
+
+
+def _analytics_history_data(conf, stock_code, type=0, ktype='D', start=None, end=None):
+    '''
+
+    :param
+    stock_code:
+    :param
+    type:
+    0: matrix
+    1: list
+    :param
+    ktype:
+    d: 日线
+    :param
+    start:
+    :param
+    end:
+        :return:
+        '''
+    stock_history_data = {'hd': {}, 'mv': {}}
+    dp_filepath = os.path.join(conf.dataConfig.data_root_path, conf.dataConfig.dp_dir)
+    stock_data_path = os.path.join(conf.dataConfig.data_root_path, conf.dataConfig.stock_data_dir)
+    stock_code = str(stock_code)
+    r = re.compile('^\d*')
+
+    if stock_code.__len__() == 6:
+        if stock_code[0] in ['6', '3']:
+            stock_file_fullname = _get_full_filename(stock_data_path, stock_code, ktype)
+        else:
+            stock_file_fullname = _get_full_filename(dp_filepath, stock_code, ktype)
+    else:
+        if re.findall(r, stock_code)[0].__len__() == len(stock_code):
+            stock_file_fullname = _get_full_filename(stock_data_path, stock_code.rjust(6, '0'), ktype)
+        else:
+            stock_file_fullname = _get_full_filename(dp_filepath, stock_code, ktype)
+    history_data = _flush_stock_orign_data(stock_file_fullname)
+    return history_data
+
+
+def _flush_stock_orign_data(stock_file_fullname, bench_data=None):
+    stock_history_data = pandas.read_csv(stock_file_fullname, index_col='date')
+    stock_history_data['price_change'] = numpy.nan
+    stock_history_data['top_tail'] = numpy.nan
+    stock_history_data['bottom_tail'] = numpy.nan
+    stock_history_data['entity'] = numpy.nan
+    stock_history_data['volume_change'] = numpy.nan
+    for i in range(len(stock_history_data.index)):
+        index = stock_history_data.index[i]
+        if index != stock_history_data.index.min():
+            stock_history_data.loc[index]['price_change'] = (stock_history_data.loc[index]['close'] -
+                                                             stock_history_data.loc[stock_history_data.index[i + 1]][
+                                                                 'close']) / \
+                                                            stock_history_data.loc[stock_history_data.index[i + 1]][
+                                                                'close']
+            stock_history_data.loc[index]['volume_change'] = stock_history_data.loc[index]['volume'] / \
+                                                             stock_history_data.loc[stock_history_data.index[i + 1]][
+                                                                 'volume']
+        else:
+            pass
+        stock_history_data.loc[index]['top_tail'] = stock_history_data.loc[index]['high'] - max(
+            stock_history_data.loc[index]['open'], stock_history_data.loc[index]['close'])
+        stock_history_data.loc[index]['bottom_tail'] = min(
+            stock_history_data.loc[index]['open'], stock_history_data.loc[index]['close']) - \
+                                                       stock_history_data.loc[index]['low']
+        stock_history_data.loc[index]['entity'] = stock_history_data.loc[index]['close'] - \
+                                                  stock_history_data.loc[index]['open']
+
+    return stock_history_data
+
+
+def _format_dimension_values(dimension_values, section=7):
+    res = []
+    step = len(dimension_values) / section
+    if len(dimension_values) < section:
+        return None
+    for i in range(1, section):
+        res.append(dimension_values[i * step])
+    return res
+
+
+    # print _format_dimension_values(range(20), section=5)

@@ -102,7 +102,7 @@ def getHistoryData(datapath, sid, start=None, end=None):
     AllData = pandas.concat(totalData)
     filenameX = lambda x: '_'.join(x)
     filename = os.path.join(datapath, filenameX([sid, start, end])) + '.csv'
-    AllData.to_csv(filename)
+    AllData.to_csv(filename.lower())
 
 
 def getLast3YearsData(datapath, sid):
@@ -112,7 +112,7 @@ def getLast3YearsData(datapath, sid):
     :param sid:
     :return:
     '''
-    tushare.get_hist_data(sid).to_csv(os.path.join(datapath, sid + '.csv'))
+    tushare.get_hist_data(sid).to_csv(os.path.join(datapath, sid + '.csv').lower())
 
 
 def fetch_stockbase(datapath):
@@ -127,7 +127,7 @@ def fetch_stockbase(datapath):
         if new_stockbase_data.get('timeToMarket').max() == pandas.read_csv(new_stockbase_data):
             pass
     os.remove(stockbase_filepath)
-    tushare.get_stock_basics().to_csv(stockbase_filepath)
+    tushare.get_stock_basics().to_csv(stockbase_filepath.lower())
 
     stockbase_filename = 'stockbase_' + 'dd'
     for filename in os.listdir(_STOCKBASE_FILEPATH):
@@ -168,13 +168,13 @@ def _DP(datapath, sid, ktype):
             toSaveData = tushare.get_hist_data(code=sid, ktype=ktype, start=datetime.strftime(start, '%Y-%m-%d'))
             # toSaveData['p_change_level'] = numpy.nan
             # toSaveData['volume_level'] = numpy.nan
-            toSaveData.to_csv(tmpffn)
+            toSaveData.to_csv(tmpffn.lower())
     else:
         tmpffn = ffn
         toSaveData = tushare.get_hist_data(code=sid, ktype=ktype)
         # toSaveData['p_change_level'] = numpy.nan
         # toSaveData['volume_level'] = numpy.nan
-        toSaveData.to_csv(ffn)
+        toSaveData.to_csv(ffn.lower())
 
 
 # 大盘分时数据统计和汇总
@@ -205,7 +205,7 @@ def DP(datapath, dps=None, ktypes=None):
         if fn.find('.bak.csv') > 0:
             op = pandas.read_csv(ffn, index_col='date')
             np = pandas.read_csv(ffn[:0 - len('.bak.csv')], index_col='date')
-            pandas.concat([op, np]).drop_duplicates().to_csv(ffn[:0 - len('.bak.csv')])
+            pandas.concat([op, np]).drop_duplicates().to_csv(ffn[:0 - len('.bak.csv')].lower())
             os.remove(ffn)
 
 
@@ -233,7 +233,7 @@ def get_stock_base(config):
         pass
     else:
         stock_base_data = tushare.get_stock_basics()
-        stock_base_data.to_csv(stock_base_full_file_name)
+        stock_base_data.to_csv(stock_base_full_file_name.lower())
     return stock_base_full_file_name
 
 
@@ -303,7 +303,7 @@ def __get_dp_history_data(dp_data_path, dp_code, ktype, time_format_str, last_up
     if last_update_file_name is not None:
         last_update_dp_data = pandas.read_csv(os.path.join(dp_data_path, last_update_file_name), index_col='date')
         dp_data = pandas.concat([last_update_dp_data, dp_data]).drop_duplicates().sort_index(ascending=False)
-    dp_data.to_csv(dp_full_file_name)
+    dp_data.to_csv(dp_full_file_name.lower())
     if last_update_file_name is not None:
         os.remove(os.path.join(dp_data_path, last_update_file_name))
 
@@ -360,7 +360,7 @@ def get_stock_history_data(config, stock_codes=None, ktype='D',
                 if temp.size == 0:
                     return None
                 try:
-                    temp.to_csv(os.path.join(stocks_data_path, stock_file_name))
+                    temp.to_csv(os.path.join(stocks_data_path, stock_file_name).lower())
                 except Exception, e:
                     print e, stock_code
                     # while (start <= now_year):
@@ -395,11 +395,11 @@ def get_stock_history_data(config, stock_codes=None, ktype='D',
                 if new_stock_data is None:
                     return stock_file_name
                 # 因为index值的数据类型不同存储之后再读出来
-                new_stock_data.to_csv(os.path.join(stocks_data_path, stock_file_name))
+                new_stock_data.to_csv(os.path.join(stocks_data_path, stock_file_name).lower())
                 new_stock_data = pandas.read_csv(os.path.join(stocks_data_path, stock_file_name), index_col='date')
                 old_stock_data = pandas.read_csv(os.path.join(stocks_data_path, last_stock_file_name), index_col='date')
                 pandas.concat([new_stock_data, old_stock_data]).drop_duplicates().sort_index(ascending=False).to_csv(
-                    os.path.join(stocks_data_path, stock_file_name))
+                    os.path.join(stocks_data_path, stock_file_name).lower())
                 os.remove(os.path.join(stocks_data_path, last_stock_file_name))
                 # except Exception, e:
                 # print stock_code, e
